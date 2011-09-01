@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 
   // Initialize weak formulation.
   CustomWeakFormHeatAndFlow wf(STOKES, RE, TAU, &xvel_prev_time, &yvel_prev_time, &temperature_prev_time, 
-    HEAT_SOURCE, SPECIFIC_HEAT_OUTER, SPECIFIC_HEAT_INNER, RHO_OUTER, RHO_INNER, THERMAL_DIFFUSIVITY_OUTER, THERMAL_DIFFUSIVITY_INNER, RE * VISCOSITY_OUTER / (RHO_OUTER * L));
+    HEAT_SOURCE, SPECIFIC_HEAT_INNER, SPECIFIC_HEAT_OUTER, RHO_INNER, RHO_OUTER, THERMAL_DIFFUSIVITY_INNER, THERMAL_DIFFUSIVITY_OUTER, RE * VISCOSITY_OUTER / (RHO_OUTER * L));
   
   // Initialize the FE problem.
   DiscreteProblem<double> dp(&wf, Hermes::vector<Space<double> *>(&xvel_space, &yvel_space, &p_space, &temperature_space));

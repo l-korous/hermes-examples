@@ -11,7 +11,7 @@ class CustomWeakFormHeatAndFlow : public WeakForm<double>
 public:
   CustomWeakFormHeatAndFlow(bool Stokes, double Reynolds, double time_step, Solution<double>* x_vel_previous_time, 
     Solution<double>* y_vel_previous_time, Solution<double>* T_prev_time, double heat_source, double specific_heat_inner, 
-    double specific_heat_outer, double rho_inner, double rho_outer, double thermal_diffusivity_outer, double thermal_diffusivity_inner, double velocity_factor);
+    double specific_heat_outer, double rho_inner, double rho_outer, double thermal_diffusivity_inner, double thermal_diffusivity_outer, double velocity_factor);
 
   class BilinearFormTime: public MatrixFormVol<double>
   {

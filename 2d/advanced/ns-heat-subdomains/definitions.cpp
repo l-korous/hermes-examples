@@ -1,8 +1,8 @@
 #include "definitions.h"
 
 CustomWeakFormHeatAndFlow::CustomWeakFormHeatAndFlow(bool Stokes, double Reynolds, double time_step, Solution<double>* x_vel_previous_time, 
-  Solution<double>* y_vel_previous_time, Solution<double>* T_prev_time, double heat_source, double specific_heat_outer, 
-  double specific_heat_inner, double rho_outer, double rho_inner, double thermal_diffusivity_outer, double thermal_diffusivity_inner, double velocity_factor) 
+  Solution<double>* y_vel_previous_time, Solution<double>* T_prev_time, double heat_source, double specific_heat_inner, 
+  double specific_heat_outer, double rho_inner, double rho_outer, double thermal_diffusivity_inner, double thermal_diffusivity_outer, double velocity_factor) 
   : WeakForm<double>(4), Stokes(Stokes), Reynolds(Reynolds), time_step(time_step), x_vel_previous_time(x_vel_previous_time), y_vel_previous_time(y_vel_previous_time)
   {
     BilinearFormSymVel* sym_form_0 = new BilinearFormSymVel(0, 0, Stokes, Reynolds, time_step);
