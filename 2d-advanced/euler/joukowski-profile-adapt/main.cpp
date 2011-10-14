@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-unsigned int EVERY_NTH_STEP = 1;            
+unsigned int EVERY_NTH_STEP = 10;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = false;
@@ -319,6 +319,36 @@ int main(int argc, char* argv[])
         else
           as++;
       }
+      
+      // Visualization and saving on disk.
+      if((iteration - 1) % EVERY_NTH_STEP == 0)
+      {
+        continuity.add_record((unsigned int)(iteration - 1));
+        continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
+        continuity.get_last_record()->save_space(prev_rho.get_space());
+        continuity.get_last_record()->save_time_step_length(time_step);
+
+        // Hermes visualization.
+        if(HERMES_VISUALIZATION)
+        {        
+
+        }
+        // Output solution in VTK format.
+        if(VTK_VISUALIZATION)
+        {
+          pressure.reinit();
+          Mach_number.reinit();
+          entropy.reinit();
+          Linearizer lin;
+          char filename[40];
+          sprintf(filename, "Pressure-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&pressure, filename, "Pressure", false);
+          sprintf(filename, "Mach number-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
+          sprintf(filename, "Entropy-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&entropy, filename, "Entropy", false);
+        }
+      }
 
       // Clean up.
       delete solver;
@@ -345,36 +375,6 @@ int main(int argc, char* argv[])
     rsln_rho_v_y.own_mesh = false;
     delete rsln_e.get_mesh();
     rsln_e.own_mesh = false;
-
-    // Visualization and saving on disk.
-    if((iteration - 1) % EVERY_NTH_STEP == 0)
-    {
-      continuity.add_record((unsigned int)(iteration - 1));
-      continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
-      continuity.get_last_record()->save_space(prev_rho.get_space());
-      continuity.get_last_record()->save_time_step_length(time_step);
-
-      // Hermes visualization.
-      if(HERMES_VISUALIZATION)
-      {        
-
-      }
-      // Output solution in VTK format.
-      if(VTK_VISUALIZATION)
-      {
-        pressure.reinit();
-        Mach_number.reinit();
-        entropy.reinit();
-        Linearizer lin;
-        char filename[40];
-        sprintf(filename, "Pressure-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&pressure, filename, "Pressure", false);
-        sprintf(filename, "Mach number-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
-        sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&entropy, filename, "Entropy", false);
-      }
-    }
   }
 
   pressure_view.close();
