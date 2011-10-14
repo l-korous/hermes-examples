@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 10;            
+const unsigned int EVERY_NTH_STEP = 25;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = true;
