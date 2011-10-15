@@ -39,7 +39,7 @@ const int P_INIT = 0;
 // Number of initial uniform mesh refinements.
 const int INIT_REF_NUM_VERTEX = 0;                
 // Number of initial mesh refinements towards the profile.
-const int INIT_REF_NUM_BOUNDARY_ANISO = 3;        
+const int INIT_REF_NUM_BOUNDARY_ANISO = 4;        
 // CFL value.
 double CFL_NUMBER = 0.1;                          
 // Initial time step.
