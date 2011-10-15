@@ -334,7 +334,15 @@ int main(int argc, char* argv[])
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
         {        
+        Mach_number.reinit();
+        pressure.reinit();
+        entropy.reinit();
+        pressure_view.show(&pressure, 1);
+        entropy_production_view.show(&entropy, 1);
+        Mach_number_view.show(&Mach_number, 1);
 
+        pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
+        Mach_number_view.save_numbered_screenshot("Mach no %i.bmp", iteration);
         }
         // Output solution in VTK format.
         if(VTK_VISUALIZATION)
