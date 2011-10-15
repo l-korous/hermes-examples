@@ -365,11 +365,6 @@ int main(int argc, char* argv[])
         lin.save_solution_vtk(&pressure, filename, "Pressure", false);
         sprintf(filename, "Mach number-%i.vtk", iteration - 1);
         lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
-        if((iteration - 1) % (EVERY_NTH_STEP * EVERY_NTH_STEP) == 0) 
-        {
-          sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-          lin.save_solution_vtk(&entropy, filename, "Entropy", false);
-        }
       }
     }
   }
