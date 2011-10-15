@@ -32,7 +32,8 @@ bool SHOCK_CAPTURING = true;
 // Quantitative parameter of the discontinuity detector.
 double DISCONTINUITY_DETECTOR_PARAM = 1.0;
 
-bool REUSE_SOLUTION = true;
+// For saving/loading of solution.
+bool REUSE_SOLUTION = false;
 
 // Initial polynomial degree.     
 const int P_INIT = 0;                                              
@@ -47,7 +48,7 @@ double time_step = 1E-6;
 
 // Adaptivity.
 // Every UNREF_FREQth time step the mesh is unrefined.
-int UNREF_FREQ = 5;
+const int UNREF_FREQ = 5;
 
 // Number of mesh refinements between two unrefinements.
 // The mesh is not unrefined unless there has been a refinement since
@@ -55,7 +56,7 @@ int UNREF_FREQ = 5;
 int REFINEMENT_COUNT = 0;
 
 // This is a quantitative parameter of the adapt(...) function and
-// it has different meanings for various adaptive strategies.
+// it has different meanings for various adaptive strategies (see below).
 const double THRESHOLD = 0.3;                     
 
 // Adaptive strategy:
@@ -88,8 +89,7 @@ const int MESH_REGULARITY = -1;
 // candidates in hp-adaptivity. Default value is 1.0. 
 const double CONV_EXP = 1;                        
 
-// Stopping criterion for adaptivity (rel. error tolerance between the
-// fine mesh and coarse mesh solution in percent).
+// Stopping criterion for adaptivity.
 double ERR_STOP = 5.0;                     
 
 // Adaptivity process stops when the number of degrees of freedom grows over
@@ -148,6 +148,8 @@ int main(int argc, char* argv[])
   L2Space<double>space_rho_v_x(&mesh, P_INIT);
   L2Space<double>space_rho_v_y(&mesh, P_INIT);
   L2Space<double>space_e(&mesh, P_INIT);
+  int ndof = Space<double>::get_num_dofs(Hermes::vector<Space<double>*>(&space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+  info("ndof: %d", ndof);
 
   // Initialize solutions, set initial conditions.
   ConstantSolution<double> sln_rho(&mesh, RHO_EXT);
@@ -368,11 +370,11 @@ int main(int argc, char* argv[])
         Linearizer lin;
         char filename[40];
         sprintf(filename, "Pressure-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&pressure, filename, "Pressure");
+        lin.save_solution_vtk(&pressure, filename, "Pressure", false);
         sprintf(filename, "Mach number-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&Mach_number, filename, "MachNumber");
+        lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
         sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&entropy, filename, "Entropy");
+        lin.save_solution_vtk(&entropy, filename, "Entropy", false);
       }
     }
   }
