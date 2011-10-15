@@ -177,10 +177,10 @@ int main(int argc, char* argv[])
   OrderView w_order_view("Moisture mesh", w_mesh_win_geom);
 
   // Show initial conditions.
-  T_sln_view.show(&T_time_prev);
-  w_sln_view.show(&w_time_prev);
-  T_order_view.show(&T_space);
-  w_order_view.show(&w_space);
+  //T_sln_view.show(&T_time_prev);
+  //w_sln_view.show(&w_time_prev);
+  //T_order_view.show(&T_space);
+  //w_order_view.show(&w_space);
 
   // Time stepping loop:
   int ts = 1;
@@ -322,12 +322,12 @@ int main(int argc, char* argv[])
     char title[100];
     sprintf(title, "Temperature, t = %g days", current_time/3600./24);
     T_sln_view.set_title(title);
-    T_sln_view.show(&T_coarse);
+    //T_sln_view.show(&T_coarse);
     sprintf(title, "Moisture, t = %g days", current_time/3600./24);
     w_sln_view.set_title(title);
-    w_sln_view.show(&w_coarse);
-    T_order_view.show(&T_space);
-    w_order_view.show(&w_space);
+    //w_sln_view.show(&w_coarse);
+    //T_order_view.show(&T_space);
+    //w_order_view.show(&w_space);
 
     // Save fine mesh solutions for the next time step.
     T_time_prev.copy(&T_time_new);
