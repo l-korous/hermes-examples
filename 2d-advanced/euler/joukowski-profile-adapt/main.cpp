@@ -323,10 +323,13 @@ int main(int argc, char* argv[])
       // Visualization and saving on disk.
       if((iteration - 1) % EVERY_NTH_STEP == 0)
       {
-        continuity.add_record((unsigned int)(iteration - 1));
-        continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
-        continuity.get_last_record()->save_space(prev_rho.get_space());
-        continuity.get_last_record()->save_time_step_length(time_step);
+        if(iteration > 1)
+        {
+          continuity.add_record((unsigned int)(iteration - 1));
+          continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
+          continuity.get_last_record()->save_space(prev_rho.get_space());
+          continuity.get_last_record()->save_time_step_length(time_step);
+        }
 
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
