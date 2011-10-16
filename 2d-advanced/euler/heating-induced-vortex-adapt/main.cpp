@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 15;            
+const unsigned int EVERY_NTH_STEP = 25;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = true;
@@ -45,7 +45,7 @@ double CFL_NUMBER = 0.5;
 double time_step = 1E-6;                         
 
 // Adaptivity.
-const int NDOFS_MIN = 4000;
+const int NDOFS_MIN = 7000;
 
 // Every UNREF_FREQth time step the mesh is unrefined.
 const int UNREF_FREQ = 5;
@@ -186,8 +186,6 @@ int main(int argc, char* argv[])
   EntropyFilter entropy(Hermes::vector<MeshFunction<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), KAPPA, RHO_INITIAL_HIGH, P_INITIAL_HIGH);
 
   ScalarView pressure_view("Pressure", new WinGeom(0, 0, 600, 300));
-  ScalarView Mach_number_view("Mach number", new WinGeom(700, 0, 600, 300));
-  ScalarView entropy_production_view("Entropy estimate", new WinGeom(0, 400, 600, 300));
   VectorView velocity_view("Velocity", new WinGeom(700, 400, 600, 300));
   
   // Initialize refinement selector.
@@ -202,7 +200,7 @@ int main(int argc, char* argv[])
   for(; t < 7.0; t += time_step)
   {
     if(t > 0.25)
-      ERR_STOP = 2.5;
+      ERR_STOP = 2.3;
 
     info("---- Time step %d, time %3.5f.", iteration++, t);
 
@@ -370,23 +368,22 @@ int main(int argc, char* argv[])
       if(VTK_VISUALIZATION)
       {
         pressure.reinit();
-        Mach_number.reinit();
-        entropy.reinit();
         Linearizer lin;
         char filename[40];
         sprintf(filename, "Pressure-%i.vtk", iteration - 1);
         lin.save_solution_vtk(&pressure, filename, "Pressure", false);
-        sprintf(filename, "Mach number-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
-        sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&entropy, filename, "Entropy", false);
-    }
+        sprintf(filename, "VelocityX-%i.vtk", iteration - 1);
+        lin.save_solution_vtk(&rsln_rho_v_x, filename, "VelocityX", false);
+        sprintf(filename, "VelocityY-%i.vtk", iteration - 1);
+        lin.save_solution_vtk(&rsln_rho_v_y, filename, "VelocityY", false);
+        sprintf(filename, "Rho-%i.vtk", iteration - 1);
+        lin.save_solution_vtk(&rsln_rho, filename, "Rho", false);
+      }
     }
   }
 
   pressure_view.close();
-  entropy_production_view.close();
-  Mach_number_view.close();
+  velocity_view.close();
 
   return 0;
 }
