@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-unsigned int EVERY_NTH_STEP = 10;            
+unsigned int EVERY_NTH_STEP = 20;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = false;
@@ -41,7 +41,7 @@ const int INIT_REF_NUM_VERTEX = 0;
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 4;        
 // CFL value.
-double CFL_NUMBER = 0.1;                          
+double CFL_NUMBER = 0.05;                          
 // Initial time step.
 double time_step = 1E-6;                          
 
@@ -90,7 +90,7 @@ const double CONV_EXP = 1;
 
 // Stopping criterion for adaptivity (rel. error tolerance between the
 // fine mesh and coarse mesh solution in percent).
-const double ERR_STOP = 5E-4;                     
+const double ERR_STOP = 1E-4;                     
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
@@ -199,9 +199,6 @@ int main(int argc, char* argv[])
   // Time stepping loop.
   for(; t < 10.0; t += time_step)
   {
-    if(iteration == 20)
-      EVERY_NTH_STEP = 20;
-
     CFL.set_number(CFL_NUMBER + (t/5.0) * 1000.0);
     info("---- Time step %d, time %3.5f.", iteration++, t);
 
@@ -334,7 +331,15 @@ int main(int argc, char* argv[])
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
         {        
+        Mach_number.reinit();
+        pressure.reinit();
+        entropy.reinit();
+        pressure_view.show(&pressure, 1);
+        entropy_production_view.show(&entropy, 1);
+        Mach_number_view.show(&Mach_number, 1);
 
+        pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
+        Mach_number_view.save_numbered_screenshot("Mach no %i.bmp", iteration);
         }
         // Output solution in VTK format.
         if(VTK_VISUALIZATION)
