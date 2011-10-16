@@ -230,12 +230,6 @@ int main(int argc, char* argv[])
       Hermes::vector<Space<double> *>* ref_spaces = Space<double>::construct_refined_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
         &space_rho_v_y, &space_e), order_increase);
 
-      if(ndofs_prev != 0)
-        if(Space<double>::get_num_dofs(*ref_spaces) == ndofs_prev)
-          selector.set_error_weights(2.0 * selector.get_error_weight_h(), 1.0, 1.0);
-        else
-          selector.set_error_weights(1.0, 1.0, 1.0);
-
       ndofs_prev = Space<double>::get_num_dofs(*ref_spaces);
 
       // Project the previous time level solution onto the new fine mesh.
@@ -305,16 +299,18 @@ int main(int argc, char* argv[])
         done = true;
       else
       {
-        info("Adapting coarse mesh.");
-        done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
-          THRESHOLD, STRATEGY, MESH_REGULARITY);
-
-        REFINEMENT_COUNT++;
         if (Space<double>::get_num_dofs(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
           &space_rho_v_y, &space_e)) >= NDOF_STOP) 
           done = true;
         else
+        {
+          info("Adapting coarse mesh.");
+          done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
+            THRESHOLD, STRATEGY, MESH_REGULARITY);
+
+          REFINEMENT_COUNT++;
           as++;
+        }
       }
       
       // Visualization and saving on disk.
