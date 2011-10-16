@@ -23,7 +23,7 @@ using namespace Hermes::Hermes2D::RefinementSelectors;
 // Set to "true" to enable Hermes OpenGL visualization. 
 const bool HERMES_VISUALIZATION = false;           
 // Set to "true" to enable VTK output.
-const bool VTK_VISUALIZATION = true;              
+const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
 const unsigned int EVERY_NTH_STEP = 15;            
 
@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
 
   // Time stepping loop.
   int iteration = 0; double t = 0;
-  for(; t < 3.0; t += time_step)
+  for(; t < 7.0; t += time_step)
   {
     if(t > 0.25)
       ERR_STOP = 2.5;
