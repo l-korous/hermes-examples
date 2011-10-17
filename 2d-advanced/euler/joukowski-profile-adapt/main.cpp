@@ -41,7 +41,7 @@ const int INIT_REF_NUM_VERTEX = 0;
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 4;        
 // CFL value.
-double CFL_NUMBER = 0.05;                          
+double CFL_NUMBER = 0.02;                          
 // Initial time step.
 double time_step = 1E-6;                          
 
@@ -74,7 +74,7 @@ const int STRATEGY = 1;
 CandList CAND_LIST = H2D_HP_ANISO;                
 
 // Maximum polynomial degree used. -1 for unlimited.
-const int MAX_P_ORDER = 3;                       
+const int MAX_P_ORDER = -1;                       
 
 // Maximum allowed level of hanging nodes:
 // MESH_REGULARITY = -1 ... arbitrary level hangning nodes (default),
@@ -82,7 +82,7 @@ const int MAX_P_ORDER = 3;
 // MESH_REGULARITY = 2 ... at most two-level hanging nodes, etc.
 // Note that regular meshes are not supported, this is due to
 // their notoriously bad performance.
-const int MESH_REGULARITY = -1;                   
+const int MESH_REGULARITY = 1;                   
 
 // This parameter influences the selection of
 // candidates in hp-adaptivity. Default value is 1.0. 
@@ -189,8 +189,8 @@ int main(int argc, char* argv[])
     continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
       &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
       &mesh, &mesh));
-    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), Hermes::vector<Mesh *>(&mesh, &mesh, 
-      &mesh, &mesh));
+    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e));
     continuity.get_last_record()->load_time_step_length(time_step);
     t = continuity.get_last_record()->get_time();
     iteration = continuity.get_num();
