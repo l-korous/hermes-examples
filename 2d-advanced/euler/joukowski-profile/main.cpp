@@ -21,11 +21,11 @@ using namespace Hermes::Hermes2D::Views;
 
 // Visualization.
 // Set to "true" to enable Hermes OpenGL visualization. 
-const bool HERMES_VISUALIZATION = false;           
+const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
-const bool VTK_VISUALIZATION = true;              
+const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 10;            
+const unsigned int EVERY_NTH_STEP = 25;            
 
 // Shock capturing.
 enum shockCapturingType
@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
   MeshReaderH2DXML mloader;
   mloader.load("domain-arcs.xml", &mesh);
   
-  mesh.refine_towards_boundary(BDY_SOLID_WALL_PROFILE, INIT_REF_NUM_BOUNDARY_ANISO);
-  mesh.refine_all_elements(2);
   mesh.refine_towards_boundary(BDY_SOLID_WALL_PROFILE, INIT_REF_NUM_BOUNDARY_ANISO);
   mesh.refine_towards_vertex(0, INIT_REF_NUM_VERTEX);
 
