@@ -373,11 +373,11 @@ int main(int argc, char* argv[])
         sprintf(filename, "Pressure-%i.vtk", iteration - 1);
         lin.save_solution_vtk(&pressure, filename, "Pressure", false);
         sprintf(filename, "VelocityX-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&rsln_rho_v_x, filename, "VelocityX", false);
+        lin.save_solution_vtk(&prev_rho_v_x, filename, "VelocityX", false);
         sprintf(filename, "VelocityY-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&rsln_rho_v_y, filename, "VelocityY", false);
+        lin.save_solution_vtk(&prev_rho_v_y, filename, "VelocityY", false);
         sprintf(filename, "Rho-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&rsln_rho, filename, "Rho", false);
+        lin.save_solution_vtk(&prev_rho, filename, "Rho", false);
       }
     }
   }
