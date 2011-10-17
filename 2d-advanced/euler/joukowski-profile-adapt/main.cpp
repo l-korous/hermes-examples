@@ -25,14 +25,15 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-unsigned int EVERY_NTH_STEP = 20;            
+unsigned int EVERY_NTH_STEP = 25;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = false;
 // Quantitative parameter of the discontinuity detector.
 double DISCONTINUITY_DETECTOR_PARAM = 1.0;
 
-bool REUSE_SOLUTION = false;
+// For saving/loading of solution.
+bool REUSE_SOLUTION = true;
 
 // Initial polynomial degree.        
 const int P_INIT = 0;                                           
@@ -41,9 +42,11 @@ const int INIT_REF_NUM_VERTEX = 0;
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 4;        
 // CFL value.
-double CFL_NUMBER = 0.02;                          
+double CFL_NUMBER = 0.1;                                
 // Initial time step.
-double time_step = 1E-6;                          
+double time_step_n = 1E-6;                                
+// Initial time step.
+double time_step_n_minus_one = 1E-6;                          
 
 // Adaptivity.
 // Every UNREF_FREQth time step the mesh is unrefined.
@@ -94,7 +97,7 @@ const double ERR_STOP = 1E-4;
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
-const int NDOF_STOP = 7000;                   
+const int NDOF_STOP = 6200;                   
 
 // Matrix solver for orthogonal projections: SOLVER_AMESOS, SOLVER_AZTECOO, SOLVER_MUMPS,
 // SOLVER_PETSC, SOLVER_SUPERLU, SOLVER_UMFPACK.
@@ -153,14 +156,19 @@ int main(int argc, char* argv[])
   ConstantSolution<double> prev_rho_v_y(&mesh, RHO_EXT * V2_EXT);
   ConstantSolution<double> prev_e(&mesh, QuantityCalculator::calc_energy(RHO_EXT, RHO_EXT * V1_EXT, RHO_EXT * V2_EXT, P_EXT, KAPPA));
 
+  ConstantSolution<double> prev_rho2(&mesh, RHO_EXT);
+  ConstantSolution<double> prev_rho_v_x2(&mesh, RHO_EXT * V1_EXT);
+  ConstantSolution<double> prev_rho_v_y2(&mesh, RHO_EXT * V2_EXT);
+  ConstantSolution<double> prev_e2(&mesh, QuantityCalculator::calc_energy(RHO_EXT, RHO_EXT * V1_EXT, RHO_EXT * V2_EXT, P_EXT, KAPPA));
+
   Solution<double> rsln_rho, rsln_rho_v_x, rsln_rho_v_y, rsln_e;
 
   // Numerical flux.
   VijayasundaramNumericalFlux num_flux(KAPPA);
   
   // Initialize weak formulation.
-  EulerEquationsWeakFormSemiImplicitMultiComponent wf(&num_flux, KAPPA, RHO_EXT, V1_EXT, V2_EXT, P_EXT, BDY_SOLID_WALL, BDY_SOLID_WALL_PROFILE, 
-    BDY_INLET, BDY_OUTLET, &prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e);
+  EulerEquationsWeakFormSemiImplicitMultiComponent2ndOrder wf(&num_flux, KAPPA, RHO_EXT, V1_EXT, V2_EXT, P_EXT, BDY_SOLID_WALL, BDY_SOLID_WALL_PROFILE, 
+    BDY_INLET, BDY_OUTLET, &prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e, &prev_rho2, &prev_rho_v_x2, &prev_rho_v_y2, &prev_e2);
 
   // Filters for visualization of Mach number, pressure and entropy.
   MachNumberFilter Mach_number(Hermes::vector<MeshFunction<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), KAPPA);
@@ -170,7 +178,10 @@ int main(int argc, char* argv[])
   ScalarView pressure_view("Pressure", new WinGeom(0, 0, 600, 300));
   ScalarView Mach_number_view("Mach number", new WinGeom(700, 0, 600, 300));
   ScalarView entropy_production_view("Entropy estimate", new WinGeom(0, 400, 600, 300));
-  OrderView space_view("Space", new WinGeom(700, 400, 600, 300));
+  ScalarView s1("prev_rho", new WinGeom(0, 0, 600, 300));
+  ScalarView s2("prev_rho_v_x", new WinGeom(700, 0, 600, 300));
+  ScalarView s3("prev_rho_v_y", new WinGeom(0, 400, 600, 300));
+  ScalarView s4("prev_e", new WinGeom(700, 400, 600, 300));
   
   // Initialize refinement selector.
   L2ProjBasedSelector<double> selector(CAND_LIST, CONV_EXP, MAX_P_ORDER);
@@ -189,15 +200,16 @@ int main(int argc, char* argv[])
     continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
       &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
       &mesh, &mesh));
-    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-      &space_rho_v_y, &space_e));
-    continuity.get_last_record()->load_time_step_length(time_step);
+    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e, &prev_rho2, &prev_rho_v_x2, &prev_rho_v_y2, &prev_e2), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+    continuity.get_last_record()->load_time_step_length(time_step_n);
+    continuity.get_last_record()->load_time_step_length_n_minus_one(time_step_n_minus_one);
     t = continuity.get_last_record()->get_time();
     iteration = continuity.get_num();
   }
 
   // Time stepping loop.
-  for(; t < 10.0; t += time_step)
+  for(; t < 5.0; t += time_step_n)
   {
     CFL.set_number(CFL_NUMBER + (t/5.0) * 1000.0);
     info("---- Time step %d, time %3.5f.", iteration++, t);
@@ -250,28 +262,26 @@ int main(int argc, char* argv[])
       Vector<double>* rhs = create_vector<double>(matrix_solver_type);
       LinearSolver<double>* solver = create_linear_solver<double>(matrix_solver_type, matrix, rhs);
 
-      wf.set_time_step(time_step);
+      wf.set_time_step(time_step_n, time_step_n_minus_one);
 
+      // Assemble the stiffness matrix and rhs.
+      info("Assembling the stiffness matrix and right-hand side vector.");
       dp.assemble(matrix, rhs);
 
       // Solve the matrix problem.
       info("Solving the matrix problem.");
       if(solver->solve())
-        if(!SHOCK_CAPTURING)
-          Solution<double>::vector_to_solutions(solver->get_sln_vector(), *ref_spaces, 
-          Hermes::vector<Solution<double>*>(&rsln_rho, &rsln_rho_v_x, &rsln_rho_v_y, &rsln_e));
-        else
-        {      
-          FluxLimiter flux_limiter(FluxLimiter::Kuzmin, solver->get_sln_vector(), *ref_spaces);
-          
-          flux_limiter.limit_second_orders_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-            &space_rho_v_y, &space_e));
-          
-          flux_limiter.limit_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-            &space_rho_v_y, &space_e));
-
-          flux_limiter.get_limited_solutions(Hermes::vector<Solution<double>*>(&rsln_rho, &rsln_rho_v_x, &rsln_rho_v_y, &rsln_e));
+      {
+        if(iteration > 1)
+        {
+          prev_rho2.copy(&prev_rho);
+          prev_rho_v_x2.copy(&prev_rho_v_x);
+          prev_rho_v_y2.copy(&prev_rho_v_y);
+          prev_e2.copy(&prev_e);
         }
+
+        Solution<double>::vector_to_solutions(solver->get_sln_vector(), *ref_spaces, Hermes::vector<Solution<double> *>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
+      }
       else
         error ("Matrix solver failed.\n");
       
@@ -289,7 +299,9 @@ int main(int argc, char* argv[])
       double err_est_rel_total = adaptivity->calc_err_est(Hermes::vector<Solution<double>*>(&sln_rho, &sln_rho_v_x, &sln_rho_v_y, &sln_e),
         Hermes::vector<Solution<double>*>(&rsln_rho, &rsln_rho_v_x, &rsln_rho_v_y, &rsln_e)) * 100;
 
-      CFL.calculate_semi_implicit(Hermes::vector<Solution<double> *>(&rsln_rho, &rsln_rho_v_x, &rsln_rho_v_y, &rsln_e), (*ref_spaces)[0]->get_mesh(), time_step);
+    time_step_n_minus_one = time_step_n;
+    CFL.calculate_semi_implicit(Hermes::vector<Solution<double> *>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), (*ref_spaces)[0]->get_mesh(), time_step_n);
+
 
       // Report results.
       info("err_est_rel: %g%%", err_est_rel_total);
@@ -316,26 +328,17 @@ int main(int argc, char* argv[])
       // Visualization and saving on disk.
       if((iteration - 1) % EVERY_NTH_STEP == 0)
       {
-        if(iteration > 1)
-        {
-          continuity.add_record((unsigned int)(iteration - 1));
-          continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
-          continuity.get_last_record()->save_space(prev_rho.get_space());
-          continuity.get_last_record()->save_time_step_length(time_step);
-        }
-
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
         {        
         Mach_number.reinit();
         pressure.reinit();
         entropy.reinit();
-        pressure_view.show(&pressure, 1);
-        entropy_production_view.show(&entropy, 1);
-        Mach_number_view.show(&Mach_number, 1);
-
-        pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
-        Mach_number_view.save_numbered_screenshot("Mach no %i.bmp", iteration);
+        pressure_view.show(&pressure);
+        entropy_production_view.show(&entropy);
+        Mach_number_view.show(&Mach_number);
+        pressure_view.save_numbered_screenshot("Pressure-%u.bmp", iteration - 1, true);
+        Mach_number_view.save_numbered_screenshot("Mach-%u.bmp", iteration - 1, true);
         }
         // Output solution in VTK format.
         if(VTK_VISUALIZATION)
@@ -370,6 +373,18 @@ int main(int argc, char* argv[])
     prev_rho_v_x.copy(&rsln_rho_v_x);
     prev_rho_v_y.copy(&rsln_rho_v_y);
     prev_e.copy(&rsln_e);
+
+    // Save a current state on the disk.
+    if(iteration > 1)
+    {
+    continuity.add_record(t);
+    continuity.get_last_record()->save_mesh(&mesh);
+    continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+        &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+      continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e, &prev_rho2, &prev_rho_v_x2, &prev_rho_v_y2, &prev_e2));
+    continuity.get_last_record()->save_time_step_length(time_step_n);
+      continuity.get_last_record()->save_time_step_length_n_minus_one(time_step_n_minus_one);
+    }
     
     delete rsln_rho.get_mesh();
     rsln_rho.own_mesh = false;
