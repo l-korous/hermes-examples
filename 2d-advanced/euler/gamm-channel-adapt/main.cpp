@@ -474,9 +474,6 @@ int main(int argc, char* argv[])
       delete rhs;
       delete rhs_stabilization;
       delete adaptivity;
-      if(!done)
-        for(unsigned int i = 0; i < ref_spaces->size(); i++)
-          delete (*ref_spaces)[i];
     }
     while (done == false);
 
