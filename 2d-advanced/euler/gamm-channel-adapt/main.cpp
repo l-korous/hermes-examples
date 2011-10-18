@@ -336,8 +336,8 @@ int main(int argc, char* argv[])
         dp_stabilization.assemble(rhs_stabilization);
         if(discreteIndicator != NULL)
           delete [] discreteIndicator;
-        discreteIndicator = new bool[refspace_stabilization.get_num_dofs()];
-        for(unsigned int i = 0; i < refspace_stabilization.get_num_dofs(); i++)
+        discreteIndicator = new bool[refspace_stabilization.get_mesh()->get_num_elements()];
+        for(unsigned int i = 0; i < refspace_stabilization.get_mesh()->get_num_elements(); i++)
           discreteIndicator[i] = false;
         Element* e;
         for_all_active_elements(e, refspace_stabilization.get_mesh())
