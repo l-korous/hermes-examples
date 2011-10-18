@@ -44,7 +44,7 @@ const double NU_1 = 0.1;
 const double NU_2 = 0.1;
 
 // For saving/loading of solution.
-bool REUSE_SOLUTION = true;
+bool REUSE_SOLUTION = false;
 
 // Initial polynomial degree.   
 const int P_INIT = 1;                                                      
