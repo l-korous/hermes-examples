@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 25;            
+const unsigned int EVERY_NTH_STEP = 1;            
 
 // Shock capturing.
 enum shockCapturingType
@@ -43,12 +43,12 @@ const double NU_1 = 0.1;
 const double NU_2 = 0.1;
 
 // For saving/loading of solution.
-bool REUSE_SOLUTION = true;
+bool REUSE_SOLUTION = false;
 
 // Initial polynomial degree.       
 const int P_INIT = 1;                                                  
 // Number of initial uniform mesh refinements.
-const int INIT_REF_NUM_VERTEX = 2;                      
+const int INIT_REF_NUM_VERTEX = 4;                      
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 6;              
 // CFL value.
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
   for(; t < 5.0; t += time_step_n)
   {
     info("---- Time step %d, time %3.5f.", iteration++, t);
-    CFL.set_number(0.1 + (t/2.5) * 1000.0);
+    CFL.set_number(CFL_NUMBER + (t/5.0) * 100.0);
 
     if(SHOCK_CAPTURING && SHOCK_CAPTURING_TYPE == FEISTAUER)
     {
