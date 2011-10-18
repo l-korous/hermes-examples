@@ -172,6 +172,7 @@ int main(int argc, char* argv[])
   // Initialize the FE problem.
   DiscreteProblem<double> dp(&wf, Hermes::vector<Space<double>*>(&space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
   DiscreteProblem<double> dp_stabilization(&wf_stabilization, &space_stabilization);
+  bool* discreteIndicator = NULL;
 
   // If the FE problem is in fact a FV problem.
   if(P_INIT == 0) 
@@ -184,10 +185,12 @@ int main(int argc, char* argv[])
 
     if(SHOCK_CAPTURING && SHOCK_CAPTURING_TYPE == FEISTAUER)
     {
-      assert(space_stabilization.get_num_dofs() == space_stabilization.get_mesh()->get_num_active_elements());
       dp_stabilization.assemble(rhs_stabilization);
-      bool* discreteIndicator = new bool[space_stabilization.get_num_dofs()];
-      memset(discreteIndicator, 0, space_stabilization.get_num_dofs() * sizeof(bool));
+      if(discreteIndicator != NULL)
+        delete [] discreteIndicator;
+      discreteIndicator = new bool[space_stabilization.get_num_dofs()];
+      for(unsigned int i = 0; i < space_stabilization.get_num_dofs(); i++)
+        discreteIndicator[i] = false;
       Element* e;
       for_all_active_elements(e, space_stabilization.get_mesh())
       {
