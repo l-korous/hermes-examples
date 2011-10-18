@@ -22,9 +22,9 @@ using namespace Hermes::Hermes2D::Views;
 
 // Visualization.
 // Set to "true" to enable Hermes OpenGL visualization. 
-const bool HERMES_VISUALIZATION = true;           
+const bool HERMES_VISUALIZATION = false;           
 // Set to "true" to enable VTK output.
-const bool VTK_VISUALIZATION = false;              
+const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
 const unsigned int EVERY_NTH_STEP = 1;            
 
@@ -36,7 +36,7 @@ enum shockCapturingType
   KRIVODONOVA
 };
 bool SHOCK_CAPTURING = true;
-shockCapturingType SHOCK_CAPTURING_TYPE = KUZMIN;
+shockCapturingType SHOCK_CAPTURING_TYPE = FEISTAUER;
 // Quantitative parameter of the discontinuity detector in case of Krivodonova.
 double DISCONTINUITY_DETECTOR_PARAM = 1.0;
 // Quantitative parameter of the shock capturing in case of Feistauer.
@@ -49,7 +49,7 @@ bool REUSE_SOLUTION = true;
 // Initial polynomial degree.   
 const int P_INIT = 1;                                                      
 // Number of initial uniform mesh refinements.    
-const int INIT_REF_NUM = 2;                                                
+const int INIT_REF_NUM = 3;                                                
 // CFL value.
 double CFL_NUMBER = 1.0;                                
 // Initial time step.
