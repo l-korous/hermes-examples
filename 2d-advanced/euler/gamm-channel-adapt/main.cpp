@@ -323,19 +323,29 @@ int main(int argc, char* argv[])
       // Assemble the reference problem.
       info("Solving on reference mesh.");
       DiscreteProblem<double> dp(&wf, *ref_spaces);
+      info("Solving on reference mesh.");
       DiscreteProblem<double> dp_stabilization(&wf_stabilization, &refspace_stabilization);
 
+      info("Solving on reference mesh.");
       SparseMatrix<double>* matrix = create_matrix<double>(matrix_solver_type);
+      info("Solving on reference mesh.");
       Vector<double>* rhs = create_vector<double>(matrix_solver_type);
+      info("Solving on reference mesh.");
       Vector<double>* rhs_stabilization = create_vector<double>(matrix_solver_type);
+      info("Solving on reference mesh.");
       LinearSolver<double>* solver = create_linear_solver<double>(matrix_solver_type, matrix, rhs);
 
       if(SHOCK_CAPTURING && SHOCK_CAPTURING_TYPE == FEISTAUER)
       {
+      info("Solving on reference mesh.");
         assert(refspace_stabilization.get_num_dofs() == refspace_stabilization.get_mesh()->get_num_active_elements());
+      info("Solving on reference mesh.");
         dp_stabilization.assemble(rhs_stabilization);
+      info("Solving on reference mesh.");
         bool* discreteIndicator = new bool[refspace_stabilization.get_num_dofs()];
+      info("Solving on reference mesh.");
         memset(discreteIndicator, 0, refspace_stabilization.get_num_dofs() * sizeof(bool));
+      info("Solving on reference mesh.");
         Element* e;
         for_all_active_elements(e, refspace_stabilization.get_mesh())
         {
@@ -344,9 +354,11 @@ int main(int argc, char* argv[])
           if(rhs_stabilization->get(al.get_dof()[0]) >= 1)
             discreteIndicator[e->id] = true;
         }
+      info("Solving on reference mesh.");
         wf.set_discreteIndicator(discreteIndicator);
       }
 
+      info("Solving on reference mesh.");
       // Set the current time step.
       wf.set_time_step(time_step_n, time_step_n_minus_one);
 
