@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 30;            
+const unsigned int EVERY_NTH_STEP = 50;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = true;
@@ -87,7 +87,7 @@ const int MESH_REGULARITY = -1;
 const double CONV_EXP = 1;                        
 
 // Stopping criterion for adaptivity.
-double ERR_STOP = 1.0;                     
+double ERR_STOP = 0.8;                     
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
@@ -145,6 +145,8 @@ int main(int argc, char* argv[])
   L2Space<double> space_rho_v_x(&mesh, P_INIT);
   L2Space<double> space_rho_v_y(&mesh, P_INIT);
   L2Space<double> space_e(&mesh, P_INIT);
+  int ndof = Space<double>::get_num_dofs(Hermes::vector<Space<double>*>(&space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+  info("ndof: %d", ndof);
 
   // Initialize solutions, set initial conditions.
   ConstantSolution<double> sln_rho(&mesh, RHO_INIT);
@@ -160,7 +162,7 @@ int main(int argc, char* argv[])
   Solution<double> rsln_rho, rsln_rho_v_x, rsln_rho_v_y, rsln_e;
 
   // Numerical flux.
-  OsherSolomonNumericalFlux num_flux(KAPPA);
+  VijayasundaramNumericalFlux num_flux(KAPPA);
 
   // For saving to the disk.
   Continuity<double> continuity(Continuity<double>::onlyNumber);
@@ -189,6 +191,7 @@ int main(int argc, char* argv[])
   int iteration = 0; double t = 0;
   for(; t < 4.0; t += time_step)
   {
+    CFL.set_number(CFL_NUMBER + (t/4.0) * 1.0);
     info("---- Time step %d, time %3.5f.", iteration++, t);
 
     // Periodic global derefinements.
@@ -306,34 +309,8 @@ int main(int argc, char* argv[])
           as++;
       }
 
-      // Clean up.
-      delete solver;
-      delete matrix;
-      delete rhs;
-      delete adaptivity;
-      if(!done)
-        for(unsigned int i = 0; i < ref_spaces->size(); i++)
-          delete (*ref_spaces)[i];
-    }
-    while (done == false);
-
-    // Copy the solutions into the previous time level ones.
-    prev_rho.copy(&rsln_rho);
-    prev_rho_v_x.copy(&rsln_rho_v_x);
-    prev_rho_v_y.copy(&rsln_rho_v_y);
-    prev_e.copy(&rsln_e);
-    
-    delete rsln_rho.get_mesh();
-    rsln_rho.own_mesh = false;
-    delete rsln_rho_v_x.get_mesh();
-    rsln_rho_v_x.own_mesh = false;
-    delete rsln_rho_v_y.get_mesh();
-    rsln_rho_v_y.own_mesh = false;
-    delete rsln_e.get_mesh();
-    rsln_e.own_mesh = false;
-
     // Visualization and saving on disk.
-    if((iteration - 1) % EVERY_NTH_STEP == 0) 
+      if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
     {
       continuity.add_record((unsigned int)(iteration - 1));
       continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
@@ -365,13 +342,31 @@ int main(int argc, char* argv[])
         lin.save_solution_vtk(&pressure, filename, "Pressure", false);
         sprintf(filename, "Mach number-%i.vtk", iteration - 1);
         lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
-        if((iteration - 1) % (EVERY_NTH_STEP * EVERY_NTH_STEP) == 0) 
-        {
-          sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-          lin.save_solution_vtk(&entropy, filename, "Entropy", false);
-        }
       }
     }
+
+      // Clean up.
+      delete solver;
+      delete matrix;
+      delete rhs;
+      delete adaptivity;
+    }
+    while (done == false);
+
+    // Copy the solutions into the previous time level ones.
+    prev_rho.copy(&rsln_rho);
+    prev_rho_v_x.copy(&rsln_rho_v_x);
+    prev_rho_v_y.copy(&rsln_rho_v_y);
+    prev_e.copy(&rsln_e);
+
+    delete rsln_rho.get_mesh();
+    rsln_rho.own_mesh = false;
+    delete rsln_rho_v_x.get_mesh();
+    rsln_rho_v_x.own_mesh = false;
+    delete rsln_rho_v_y.get_mesh();
+    rsln_rho_v_y.own_mesh = false;
+    delete rsln_e.get_mesh();
+    rsln_e.own_mesh = false;
   }
 
   pressure_view.close();
