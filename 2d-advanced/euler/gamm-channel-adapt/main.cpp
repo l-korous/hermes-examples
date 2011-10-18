@@ -35,7 +35,7 @@ enum shockCapturingType
   KUZMIN,
   KRIVODONOVA
 };
-bool SHOCK_CAPTURING = false;
+bool SHOCK_CAPTURING = true;
 shockCapturingType SHOCK_CAPTURING_TYPE = FEISTAUER;
 // Quantitative parameter of the discontinuity detector in case of Krivodonova.
 double DISCONTINUITY_DETECTOR_PARAM = 1.0;
@@ -208,9 +208,10 @@ int main(int argc, char* argv[])
     continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
       &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
       &mesh, &mesh));
-    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e), Hermes::vector<Mesh *>(&mesh, &mesh, 
-      &mesh, &mesh));
+    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e, prev_rho2, prev_rho_v_x2, prev_rho_v_y2, prev_e2), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
     continuity.get_last_record()->load_time_step_length(time_step_n);
+    continuity.get_last_record()->load_time_step_length_n_minus_one(time_step_n_minus_one);
     t = continuity.get_last_record()->get_time();
     iteration = continuity.get_num();
   }
