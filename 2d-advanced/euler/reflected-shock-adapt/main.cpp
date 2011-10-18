@@ -350,9 +350,6 @@ int main(int argc, char* argv[])
       delete matrix;
       delete rhs;
       delete adaptivity;
-      if(!done)
-        for(unsigned int i = 0; i < ref_spaces->size(); i++)
-          delete (*ref_spaces)[i];
     }
     while (done == false);
 
