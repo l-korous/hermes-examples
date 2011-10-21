@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
   // Time stepping loop.
   for(; t < 5.0; t += time_step_n)
   {
-    CFL.set_number(CFL_NUMBER + (t/5.0) * 1000.0);
+    CFL.set_number(CFL_NUMBER + (t/5.0) * 100.0);
     info("---- Time step %d, time %3.5f.", iteration++, t);
 
     // Periodic global derefinements.
