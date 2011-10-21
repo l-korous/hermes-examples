@@ -167,8 +167,22 @@ int main(int argc, char* argv[])
   // Numerical flux.
   VijayasundaramNumericalFlux num_flux(KAPPA);
   
-  // For saving to the disk.
-  Continuity<double> continuity(Continuity<double>::onlyNumber);
+  // Look for a saved solution on the disk.
+  Continuity<double> continuity(Continuity<double>::onlyTime);
+  int iteration = 0; double t = 0;
+
+  if(REUSE_SOLUTION && continuity.have_record_available())
+  {
+    continuity.get_last_record()->load_mesh(&mesh);
+    continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
+      &mesh, &mesh));
+    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e));
+    continuity.get_last_record()->load_time_step_length(time_step);
+    t = continuity.get_last_record()->get_time();
+    iteration = continuity.get_num();
+  }
 
   // Initialize weak formulation.
   EulerEquationsWeakFormSemiImplicitMultiComponent wf(&num_flux, KAPPA, RHO_EXT, V1_EXT, V2_EXT, P_EXT, BDY_SOLID_WALL_BOTTOM, BDY_SOLID_WALL_TOP, 
@@ -191,7 +205,6 @@ int main(int argc, char* argv[])
   CFLCalculation CFL(CFL_NUMBER, KAPPA);
 
   // Time stepping loop.
-  int iteration = 0; double t = 0;
   for(; t < 4.5; t += time_step)
   {
     if(t > 0.3)
@@ -318,10 +331,16 @@ int main(int argc, char* argv[])
     // Visualization and saving on disk.
       if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
     {
-      continuity.add_record((unsigned int)(iteration - 1));
-      continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
-      continuity.get_last_record()->save_space(prev_rho.get_space());
-      continuity.get_last_record()->save_time_step_length(time_step);
+      // Save a current state on the disk.
+	if(iteration > 1)
+	{
+	  continuity.add_record(t);
+	  continuity.get_last_record()->save_mesh(&mesh);
+	  continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+	    &space_rho_v_y, &space_e));
+	  continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
+	  continuity.get_last_record()->save_time_step_length(time_step);
+	}
 
       // Hermes visualization.
       if(HERMES_VISUALIZATION)
