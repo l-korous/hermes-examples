@@ -22,11 +22,11 @@ using namespace Hermes::Hermes2D::RefinementSelectors;
 
 // Visualization.
 // Set to "true" to enable Hermes OpenGL visualization. 
-const bool HERMES_VISUALIZATION = false;           
+const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;              
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 25;            
+const unsigned int EVERY_NTH_STEP = 20;            
 
 // Shock capturing.
 enum shockCapturingType
@@ -101,7 +101,7 @@ const int MESH_REGULARITY = -1;
 const double CONV_EXP = 1;                        
 
 // Stopping criterion for adaptivity.
-const double ERR_STOP = 0.5;                     
+const double ERR_STOP = 0.45;                     
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
