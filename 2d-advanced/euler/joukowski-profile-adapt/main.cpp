@@ -38,7 +38,7 @@ bool REUSE_SOLUTION = true;
 // Initial polynomial degree.        
 const int P_INIT = 0;                                           
 // Number of initial uniform mesh refinements.
-const int INIT_REF_NUM_VERTEX = 0;                
+const int INIT_REF_NUM_VERTEX = 2;                
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 4;        
 // CFL value.

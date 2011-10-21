@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 1;            
+const unsigned int EVERY_NTH_STEP = 10;            
 
 // Shock capturing.
 enum shockCapturingType
@@ -52,7 +52,7 @@ const int INIT_REF_NUM_VERTEX = 4;
 // Number of initial mesh refinements towards the profile.
 const int INIT_REF_NUM_BOUNDARY_ANISO = 6;              
 // CFL value.
-double CFL_NUMBER = 0.1;                                
+double CFL_NUMBER = 1.0;                                
 // Initial time step.
 double time_step_n = 1E-6;                                
 // Initial time step.
