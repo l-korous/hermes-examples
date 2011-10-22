@@ -449,7 +449,7 @@ int main(int argc, char* argv[])
           continuity.add_record(t);
           continuity.get_last_record()->save_mesh(&mesh);
           continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-              &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+              &space_rho_v_y, &space_e));
           continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e, prev_rho2, prev_rho_v_x2, prev_rho_v_y2, prev_e2));
           continuity.get_last_record()->save_time_step_length(time_step_n);
           continuity.get_last_record()->save_time_step_length_n_minus_one(time_step_n_minus_one);
