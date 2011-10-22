@@ -44,7 +44,7 @@ const double NU_1 = 0.1;
 const double NU_2 = 0.1;
 
 // For saving/loading of solution.
-bool REUSE_SOLUTION = false;
+bool REUSE_SOLUTION = true;
 
 // Initial polynomial degree. 
 const int P_INIT = 0;                                                  
@@ -101,7 +101,7 @@ const int MESH_REGULARITY = -1;
 const double CONV_EXP = 1;                        
 
 // Stopping criterion for adaptivity.
-const double ERR_STOP = 0.45;                     
+const double ERR_STOP = 0.5;                     
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
@@ -201,6 +201,7 @@ int main(int argc, char* argv[])
   // Look for a saved solution on the disk.
   Continuity<double> continuity(Continuity<double>::onlyTime);
   int iteration = 0; double t = 0;
+  bool loaded_now = false;
 
   if(REUSE_SOLUTION && continuity.have_record_available())
   {
@@ -208,12 +209,11 @@ int main(int argc, char* argv[])
     continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
       &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
       &mesh, &mesh));
-    continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e, prev_rho2, prev_rho_v_x2, prev_rho_v_y2, prev_e2), Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-      &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
     continuity.get_last_record()->load_time_step_length(time_step_n);
     continuity.get_last_record()->load_time_step_length_n_minus_one(time_step_n_minus_one);
     t = continuity.get_last_record()->get_time();
     iteration = continuity.get_num();
+    loaded_now = true;
   }
 
   // Time stepping loop.
@@ -283,6 +283,13 @@ int main(int argc, char* argv[])
         prev_rho_v_x2 = new ConstantSolution<double>((*ref_spaces)[0]->get_mesh(), RHO_EXT * V1_EXT);
         prev_rho_v_y2 = new ConstantSolution<double>((*ref_spaces)[0]->get_mesh(), RHO_EXT * V2_EXT);
         prev_e2 = new ConstantSolution<double>((*ref_spaces)[0]->get_mesh(), QuantityCalculator::calc_energy(RHO_EXT, RHO_EXT * V1_EXT, RHO_EXT * V2_EXT, P_EXT, KAPPA));
+      }
+      else if(loaded_now)
+      {
+        loaded_now = false;
+
+        continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e, prev_rho2, prev_rho_v_x2, prev_rho_v_y2, prev_e2), 
+            Hermes::vector<Space<double> *>((*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3], (*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3]));
       }
       else
       {
@@ -436,11 +443,18 @@ int main(int argc, char* argv[])
       // Visualization and saving on disk.
       if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
       {
-        continuity.add_record((unsigned int)(iteration - 1));
-        continuity.get_last_record()->save_mesh(prev_rho->get_mesh());
-        continuity.get_last_record()->save_space(prev_rho->get_space());
-        continuity.get_last_record()->save_time_step_length(time_step_n);
-
+        // Save a current state on the disk.
+        if(iteration > 1)
+        {
+          continuity.add_record(t);
+          continuity.get_last_record()->save_mesh(&mesh);
+          continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+              &space_rho_v_y, &space_e, &space_rho, &space_rho_v_x, &space_rho_v_y, &space_e));
+          continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(prev_rho, prev_rho_v_x, prev_rho_v_y, prev_e, prev_rho2, prev_rho_v_x2, prev_rho_v_y2, prev_e2));
+          continuity.get_last_record()->save_time_step_length(time_step_n);
+          continuity.get_last_record()->save_time_step_length_n_minus_one(time_step_n_minus_one);
+        }
+  
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
         {        
