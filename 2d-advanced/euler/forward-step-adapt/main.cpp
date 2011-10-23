@@ -134,9 +134,9 @@ int main(int argc, char* argv[])
   Mesh mesh, base_mesh;
   MeshReaderH2D mloader;
   mloader.load("ffs.mesh", &base_mesh);
-  
+
   base_mesh.refine_by_criterion(refinement_criterion, INIT_REF_NUM_STEP);
-  
+
   // Perform initial mesh refinements.
   for (int i = 0; i < INIT_REF_NUM; i++)
     base_mesh.refine_all_elements(0, true);
@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 
   // Numerical flux.
   VijayasundaramNumericalFlux num_flux(KAPPA);
-  
+
   // Look for a saved solution on the disk.
   Continuity<double> continuity(Continuity<double>::onlyTime);
   int iteration = 0; double t = 0;
@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
   ScalarView pressure_view("Pressure", new WinGeom(0, 0, 600, 300));
   ScalarView Mach_number_view("Mach number", new WinGeom(700, 0, 600, 300));
   ScalarView entropy_production_view("Entropy estimate", new WinGeom(0, 400, 600, 300));
-  
+
   // Initialize refinement selector.
   L2ProjBasedSelector<double> selector(CAND_LIST, CONV_EXP, MAX_P_ORDER);
   selector.set_error_weights(1.0, 1.0, 1.0);
@@ -218,9 +218,9 @@ int main(int argc, char* argv[])
     {
       info("Global mesh derefinement.");
       REFINEMENT_COUNT = 0;
-      
+
       space_rho.unrefine_all_mesh_elements(true);
-      
+
       space_rho.adjust_element_order(-1, P_INIT);
       space_rho_v_x.copy_orders(&space_rho);
       space_rho_v_y.copy_orders(&space_rho);
@@ -256,11 +256,11 @@ int main(int argc, char* argv[])
         loaded_now = false;
 
         continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
-            Hermes::vector<Space<double> *>((*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3]));
+          Hermes::vector<Space<double> *>((*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3]));
       }
       else
         OGProjection<double>::project_global(*ref_spaces, Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
-            Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver_type, Hermes::vector<Hermes::Hermes2D::ProjNormType>(), iteration > std::max(continuity.get_num() + 1, 1));
+        Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver_type, Hermes::vector<Hermes::Hermes2D::ProjNormType>(), iteration > std::max(continuity.get_num() + 1, 1));
 
       // Report NDOFs.
       info("ndof_coarse: %d, ndof_fine: %d.", 
@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
 
       dp.assemble(matrix, rhs);
 
-     // Solve the matrix problem.
+      // Solve the matrix problem.
       info("Solving the matrix problem.");
       if(solver->solve())
         if(!SHOCK_CAPTURING)
@@ -288,10 +288,10 @@ int main(int argc, char* argv[])
         else
         {      
           FluxLimiter flux_limiter(FluxLimiter::Kuzmin, solver->get_sln_vector(), *ref_spaces, true);
-          
+
           flux_limiter.limit_second_orders_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
             &space_rho_v_y, &space_e));
-          
+
           flux_limiter.limit_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
             &space_rho_v_y, &space_e));
 
@@ -325,60 +325,63 @@ int main(int argc, char* argv[])
       else
       {
         info("Adapting coarse mesh.");
-        done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
-          THRESHOLD, STRATEGY, MESH_REGULARITY);
-
-        REFINEMENT_COUNT++;
         if (Space<double>::get_num_dofs(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
           &space_rho_v_y, &space_e)) >= NDOF_STOP) 
           done = true;
         else
+        {
+          REFINEMENT_COUNT++;
+          done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
+            THRESHOLD, STRATEGY, MESH_REGULARITY);
+        }
+
+        if(!done)
           as++;
       }
 
-    // Visualization and saving on disk.
+      // Visualization and saving on disk.
       if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
-    {
-      // Save a current state on the disk.
-	if(iteration > 1)
-	{
-	  continuity.add_record(t);
-	  continuity.get_last_record()->save_mesh(&mesh);
-	  continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-	    &space_rho_v_y, &space_e));
-	  continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
-	  continuity.get_last_record()->save_time_step_length(time_step);
-	}
-
-      // Hermes visualization.
-      if(HERMES_VISUALIZATION)
-      {        
-        Mach_number.reinit();
-        pressure.reinit();
-        entropy.reinit();
-        pressure_view.show(&pressure, 1);
-        entropy_production_view.show(&entropy, 1);
-        Mach_number_view.show(&Mach_number, 1);
-
-        pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
-        Mach_number_view.save_numbered_screenshot("Mach no %i.bmp", iteration);
-      }
-      // Output solution in VTK format.
-      if(VTK_VISUALIZATION)
       {
-        pressure.reinit();
-        Mach_number.reinit();
-        entropy.reinit();
-        Linearizer lin;
-        char filename[40];
-        sprintf(filename, "Pressure-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&pressure, filename, "Pressure", false);
-        sprintf(filename, "Mach number-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
-        sprintf(filename, "Entropy-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&entropy, filename, "Entropy", false);
+        // Save a current state on the disk.
+        if(iteration > 1)
+        {
+          continuity.add_record(t);
+          continuity.get_last_record()->save_mesh(&mesh);
+          continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+            &space_rho_v_y, &space_e));
+          continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
+          continuity.get_last_record()->save_time_step_length(time_step);
+        }
+
+        // Hermes visualization.
+        if(HERMES_VISUALIZATION)
+        {        
+          Mach_number.reinit();
+          pressure.reinit();
+          entropy.reinit();
+          pressure_view.show(&pressure, 1);
+          entropy_production_view.show(&entropy, 1);
+          Mach_number_view.show(&Mach_number, 1);
+
+          pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
+          Mach_number_view.save_numbered_screenshot("Mach no %i.bmp", iteration);
+        }
+        // Output solution in VTK format.
+        if(VTK_VISUALIZATION)
+        {
+          pressure.reinit();
+          Mach_number.reinit();
+          entropy.reinit();
+          Linearizer lin;
+          char filename[40];
+          sprintf(filename, "Pressure-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&pressure, filename, "Pressure", false);
+          sprintf(filename, "Mach number-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&Mach_number, filename, "MachNumber", false);
+          sprintf(filename, "Entropy-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&entropy, filename, "Entropy", false);
+        }
       }
-    }
 
       // Clean up.
       delete solver;
