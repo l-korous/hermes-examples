@@ -259,18 +259,18 @@ int main(int argc, char* argv[])
             Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver_type, Hermes::vector<Hermes::Hermes2D::ProjNormType>());
         if(iteration > std::max(continuity.get_num() + 1, 1) && as > 1)
         {
-          delete prev_rho.get_mesh();
-          delete prev_rho.get_space();
-          prev_rho.own_mesh = false;
-          delete prev_rho_v_x.get_mesh();
-          delete prev_rho_v_x.get_space();
-          prev_rho_v_x.own_mesh = false;
-          delete prev_rho_v_y.get_mesh();
-          delete prev_rho_v_y.get_space();
-          prev_rho_v_y.own_mesh = false;
-          delete prev_e.get_mesh();
-          delete prev_e.get_space();
-          prev_e.own_mesh = false;
+          delete rsln_rho.get_mesh();
+          delete rsln_rho.get_space();
+          rsln_rho.own_mesh = false;
+          delete rsln_rho_v_x.get_mesh();
+          delete rsln_rho_v_x.get_space();
+          rsln_rho_v_x.own_mesh = false;
+          delete rsln_rho_v_y.get_mesh();
+          delete rsln_rho_v_y.get_space();
+          rsln_rho_v_y.own_mesh = false;
+          delete rsln_e.get_mesh();
+          delete rsln_e.get_space();
+          rsln_e.own_mesh = false;
         }
       }
 
