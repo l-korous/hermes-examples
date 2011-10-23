@@ -337,14 +337,17 @@ int main(int argc, char* argv[])
       else
       {
         info("Adapting coarse mesh.");
-        done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
-          THRESHOLD, STRATEGY, MESH_REGULARITY);
-
-        REFINEMENT_COUNT++;
         if (Space<double>::get_num_dofs(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
           &space_rho_v_y, &space_e)) >= NDOF_STOP) 
           done = true;
         else
+        {
+          REFINEMENT_COUNT++;
+          done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
+            THRESHOLD, STRATEGY, MESH_REGULARITY);
+        }
+
+        if(!done)
           as++;
       }
 
