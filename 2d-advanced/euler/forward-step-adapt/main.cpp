@@ -259,8 +259,25 @@ int main(int argc, char* argv[])
           Hermes::vector<Space<double> *>((*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3]));
       }
       else
+      {
         OGProjection<double>::project_global(*ref_spaces, Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
-        Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver_type, Hermes::vector<Hermes::Hermes2D::ProjNormType>(), iteration > std::max(continuity.get_num() + 1, 1));
+            Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver_type, Hermes::vector<Hermes::Hermes2D::ProjNormType>());
+        if(iteration > std::max(continuity.get_num() + 1, 1) && as > 1)
+        {
+          delete prev_rho.get_mesh();
+          delete prev_rho.get_space();
+          prev_rho.own_mesh = false;
+          delete prev_rho_v_x.get_mesh();
+          delete prev_rho_v_x.get_space();
+          prev_rho_v_x.own_mesh = false;
+          delete prev_rho_v_y.get_mesh();
+          delete prev_rho_v_y.get_space();
+          prev_rho_v_y.own_mesh = false;
+          delete prev_e.get_mesh();
+          delete prev_e.get_space();
+          prev_e.own_mesh = false;
+        }
+      }
 
       // Report NDOFs.
       info("ndof_coarse: %d, ndof_fine: %d.", 
@@ -342,17 +359,6 @@ int main(int argc, char* argv[])
       // Visualization and saving on disk.
       if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
       {
-        // Save a current state on the disk.
-        if(iteration > 1)
-        {
-          continuity.add_record(t);
-          continuity.get_last_record()->save_mesh(&mesh);
-          continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
-            &space_rho_v_y, &space_e));
-          continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
-          continuity.get_last_record()->save_time_step_length(time_step);
-        }
-
         // Hermes visualization.
         if(HERMES_VISUALIZATION)
         {        
@@ -381,6 +387,16 @@ int main(int argc, char* argv[])
           sprintf(filename, "Entropy-%i.vtk", iteration - 1);
           lin.save_solution_vtk(&entropy, filename, "Entropy", false);
         }
+        // Save a current state on the disk.
+        if(iteration > 1)
+        {
+          continuity.add_record(t);
+          continuity.get_last_record()->save_mesh(&mesh);
+          continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+            &space_rho_v_y, &space_e));
+          continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
+          continuity.get_last_record()->save_time_step_length(time_step);
+        }
       }
 
       // Clean up.
@@ -398,12 +414,16 @@ int main(int argc, char* argv[])
     prev_e.copy(&rsln_e);
 
     delete rsln_rho.get_mesh();
+    delete rsln_rho.get_space();
     rsln_rho.own_mesh = false;
     delete rsln_rho_v_x.get_mesh();
+    delete rsln_rho_v_x.get_space();
     rsln_rho_v_x.own_mesh = false;
     delete rsln_rho_v_y.get_mesh();
+    delete rsln_rho_v_y.get_space();
     rsln_rho_v_y.own_mesh = false;
     delete rsln_e.get_mesh();
+    delete rsln_e.get_space();
     rsln_e.own_mesh = false;
   }
 
