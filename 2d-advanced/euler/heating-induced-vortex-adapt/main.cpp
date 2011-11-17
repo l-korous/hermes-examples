@@ -25,7 +25,7 @@ const bool HERMES_VISUALIZATION = false;
 // Set to "true" to enable VTK output.
 const bool VTK_VISUALIZATION = true;
 // Set visual output for every nth step.
-const unsigned int EVERY_NTH_STEP = 25;            
+const unsigned int EVERY_NTH_STEP = 20;            
 
 // Shock capturing.
 bool SHOCK_CAPTURING = true;
@@ -45,7 +45,7 @@ double CFL_NUMBER = 0.5;
 double time_step = 1E-6;                         
 
 // Adaptivity.
-const int NDOFS_MIN = 7000;
+const int NDOFS_MIN = 6000;
 
 // Every UNREF_FREQth time step the mesh is unrefined.
 const int UNREF_FREQ = 5;
@@ -95,7 +95,7 @@ double ERR_STOP = 5.0;
 
 // Adaptivity process stops when the number of degrees of freedom grows over
 // this limit. This is mainly to prevent h-adaptivity to go on forever.
-const int NDOF_STOP = 100000;                   
+const int NDOF_STOP = 4500;                   
 
 // Matrix solver for orthogonal projections: SOLVER_AMESOS, SOLVER_AZTECOO, SOLVER_MUMPS,
 // SOLVER_PETSC, SOLVER_SUPERLU, SOLVER_UMFPACK.
@@ -243,9 +243,8 @@ int main(int argc, char* argv[])
       // Project the previous time level solution onto the new fine mesh.
       info("Projecting the previous time level solution onto the new fine mesh.");
       OGProjection<double>::project_global(*ref_spaces, Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
-        Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver, Hermes::vector<Hermes::Hermes2D::ProjNormType>(), iteration > 1);
+        Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver, Hermes::vector<Hermes::Hermes2D::ProjNormType>());
 
-      
       // Report NDOFs.
       info("ndof_coarse: %d, ndof_fine: %d.", 
         Space<double>::get_num_dofs(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
@@ -308,16 +307,17 @@ int main(int argc, char* argv[])
         done = true;
       else
       {
-        info("Adapting coarse mesh.");
-        done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
-          THRESHOLD, STRATEGY, MESH_REGULARITY);
-
-        REFINEMENT_COUNT++;
         if (Space<double>::get_num_dofs(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
           &space_rho_v_y, &space_e)) >= NDOF_STOP) 
           done = true;
         else
+        {
           as++;
+          info("Adapting coarse mesh.");
+          done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
+            THRESHOLD, STRATEGY, MESH_REGULARITY);
+          REFINEMENT_COUNT++;
+        }
       }
 
       // Clean up.
@@ -359,7 +359,7 @@ int main(int argc, char* argv[])
       {        
         pressure.reinit();
         pressure_view.show(&pressure);
-        velocity_view.show(&rsln_rho_v_x, &rsln_rho_v_y);
+        velocity_view.show(&prev_rho_v_x, &prev_rho_v_y);
         
         pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
         velocity_view.save_numbered_screenshot("Velocity %i.bmp", iteration);
