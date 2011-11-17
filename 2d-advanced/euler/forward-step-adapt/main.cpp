@@ -313,7 +313,7 @@ int main(int argc, char* argv[])
 
           std::stringstream ss;
           ss << "discontinuous_limit_to_1_" << iteration << ".h2d";
-          std::ofstream out(ss.str());
+          std::ofstream out(ss.str().c_str());
           for(std::set<int>::iterator it = static_cast<KuzminDiscontinuityDetector*>(flux_limiter.detector)->second_order_discontinuous_element_ids.begin(); it != static_cast<KuzminDiscontinuityDetector*>(flux_limiter.detector)->second_order_discontinuous_element_ids.end(); it++) 
             out << *it << std::endl;
           out.close();
@@ -323,7 +323,7 @@ int main(int argc, char* argv[])
           
           ss.clear();
           ss << "discontinuous_limit_to_0_" << iteration << ".h2d";
-          std::ofstream out_1(ss.str());
+          std::ofstream out_1(ss.str().c_str());
           for(std::set<int>::iterator it = flux_limiter.detector->get_discontinuous_element_ids().begin(); it != flux_limiter.detector->get_discontinuous_element_ids().end(); it++) 
             out_1 << *it << std::endl;
           out_1.close();
