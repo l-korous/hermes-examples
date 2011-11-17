@@ -311,8 +311,26 @@ int main(int argc, char* argv[])
           flux_limiter.limit_second_orders_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
             &space_rho_v_y, &space_e));
 
+          std::stringstream ss;
+          ss << "discontinuous_limit_to_1_" << iteration << ".h2d";
+          std::ofstream out(ss.str());
+          for(std::set<int>::iterator it = static_cast<KuzminDiscontinuityDetector*>(flux_limiter.detector)->second_order_discontinuous_element_ids.begin(); it != static_cast<KuzminDiscontinuityDetector*>(flux_limiter.detector)->second_order_discontinuous_element_ids.end(); it++) 
+            out << *it << std::endl;
+          out.close();
+
           flux_limiter.limit_according_to_detector(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
             &space_rho_v_y, &space_e));
+          
+          ss.clear();
+          ss << "discontinuous_limit_to_0_" << iteration << ".h2d";
+          std::ofstream out_1(ss.str());
+          for(std::set<int>::iterator it = flux_limiter.detector->get_discontinuous_element_ids().begin(); it != flux_limiter.detector->get_discontinuous_element_ids().end(); it++) 
+            out_1 << *it << std::endl;
+          out_1.close();
+
+          flux_limiter.detector->get_discontinuous_element_ids();
+
+          
 
           flux_limiter.get_limited_solutions(Hermes::vector<Solution<double>*>(&rsln_rho, &rsln_rho_v_x, &rsln_rho_v_y, &rsln_e));
         }
