@@ -48,7 +48,7 @@ double time_step = 1E-6;
 
 // Adaptivity.
 // Every UNREF_FREQth time step the mesh is unrefined.
-const int UNREF_FREQ = 5;
+const int UNREF_FREQ = 10;
 
 // Number of mesh refinements between two unrefinements.
 // The mesh is not unrefined unless there has been a refinement since
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
   for(; t < 4.5; t += time_step)
   {
     if(t > 0.3)
-      ERR_STOP = 2.5;
+      ERR_STOP = 2.75;
 
     CFL.set_number(CFL_NUMBER + (t/4.5) * 1.0);
     info("---- Time step %d, time %3.5f.", iteration++, t);
