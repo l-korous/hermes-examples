@@ -28,7 +28,7 @@ const bool VTK_VISUALIZATION = true;
 const unsigned int EVERY_NTH_STEP = 20;            
 
 // Shock capturing.
-bool SHOCK_CAPTURING = true;
+bool SHOCK_CAPTURING = false;
 // Quantitative parameter of the discontinuity detector.
 double DISCONTINUITY_DETECTOR_PARAM = 1.0;
 
@@ -45,7 +45,7 @@ double CFL_NUMBER = 0.5;
 double time_step = 1E-6;                         
 
 // Adaptivity.
-const int NDOFS_MIN = 6000;
+const int NDOFS_MIN = 12000;
 
 // Every UNREF_FREQth time step the mesh is unrefined.
 const int UNREF_FREQ = 5;
@@ -173,9 +173,6 @@ int main(int argc, char* argv[])
   // Numerical flux.
   VijayasundaramNumericalFlux num_flux(KAPPA);
   
-  // For saving to the disk.
-  Continuity<double> continuity(Continuity<double>::onlyNumber);
-
   // Initialize weak formulation.
   EulerEquationsWeakFormSemiImplicitMultiComponent wf(&num_flux, KAPPA, RHO_EXT, V1_EXT, V2_EXT, P_EXT, BDY_SOLID_WALL, BDY_SOLID_WALL, 
     BDY_INLET, "Outlet marker not used", &prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e);
@@ -195,9 +192,25 @@ int main(int argc, char* argv[])
   // Set up CFL calculation class.
   CFLCalculation CFL(CFL_NUMBER, KAPPA);
 
-  // Time stepping loop.
+  // Look for a saved solution on the disk.
+  Continuity<double> continuity(Continuity<double>::onlyTime);
   int iteration = 0; double t = 0;
-  for(; t < 7.0; t += time_step)
+  bool loaded_now = false;
+
+  if(REUSE_SOLUTION && continuity.have_record_available())
+  {
+    continuity.get_last_record()->load_mesh(&mesh);
+    continuity.get_last_record()->load_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+      &space_rho_v_y, &space_e), Hermes::vector<SpaceType>(HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE, HERMES_L2_SPACE), Hermes::vector<Mesh *>(&mesh, &mesh, 
+      &mesh, &mesh));
+    continuity.get_last_record()->load_time_step_length(time_step);
+    t = continuity.get_last_record()->get_time() + time_step;
+    iteration = (continuity.get_num()) * EVERY_NTH_STEP + 1;
+    loaded_now = true;
+  }
+
+  // Time stepping loop.
+  for(; t < 15.0; t += time_step)
   {
     if(t > 0.25)
       ERR_STOP = 2.3;
@@ -242,8 +255,33 @@ int main(int argc, char* argv[])
 
       // Project the previous time level solution onto the new fine mesh.
       info("Projecting the previous time level solution onto the new fine mesh.");
+      if(loaded_now)
+      {
+        loaded_now = false;
+
+        continuity.get_last_record()->load_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
+            Hermes::vector<Space<double> *>((*ref_spaces)[0], (*ref_spaces)[1], (*ref_spaces)[2], (*ref_spaces)[3]));
+      }
+      else
+      {
       OGProjection<double>::project_global(*ref_spaces, Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), 
         Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e), matrix_solver, Hermes::vector<Hermes::Hermes2D::ProjNormType>());
+        if(iteration > std::max((int)(continuity.get_num() * EVERY_NTH_STEP + 2), 1) && as > 1)
+        {
+          delete rsln_rho.get_mesh();
+          delete rsln_rho.get_space();
+          rsln_rho.own_mesh = false;
+          delete rsln_rho_v_x.get_mesh();
+          delete rsln_rho_v_x.get_space();
+          rsln_rho_v_x.own_mesh = false;
+          delete rsln_rho_v_y.get_mesh();
+          delete rsln_rho_v_y.get_space();
+          rsln_rho_v_y.own_mesh = false;
+          delete rsln_e.get_mesh();
+          delete rsln_e.get_space();
+          rsln_e.own_mesh = false;
+        }
+      }
 
       // Report NDOFs.
       info("ndof_coarse: %d, ndof_fine: %d.", 
@@ -312,11 +350,48 @@ int main(int argc, char* argv[])
           done = true;
         else
         {
-          as++;
-          info("Adapting coarse mesh.");
+          REFINEMENT_COUNT++;
           done = adaptivity->adapt(Hermes::vector<RefinementSelectors::Selector<double> *>(&selector, &selector, &selector, &selector), 
             THRESHOLD, STRATEGY, MESH_REGULARITY);
-          REFINEMENT_COUNT++;
+        }
+
+        if(!done)
+          as++;
+      }
+
+      // Visualization and saving on disk.
+      if(done && (iteration - 1) % EVERY_NTH_STEP == 0 && iteration > 1)
+      {
+        // Hermes visualization.
+        if(HERMES_VISUALIZATION) 
+        {
+          Mach_number.reinit();
+          pressure.reinit();
+          entropy.reinit();
+          pressure_view.show(&pressure);
+          velocity_view.show(&prev_rho_v_x, &prev_rho_v_y);
+          pressure_view.save_numbered_screenshot("Pressure-%u.bmp", iteration - 1, true);
+          velocity_view.save_numbered_screenshot("Velocity-%u.bmp", iteration - 1, true);
+        }
+        // Output solution in VTK format.
+        if(VTK_VISUALIZATION) 
+        {
+          pressure.reinit();
+          Mach_number.reinit();
+          Linearizer lin;
+          char filename[40];
+          sprintf(filename, "Pressure-%i.vtk", iteration - 1);
+          lin.save_solution_vtk(&pressure, filename, "Pressure", false);
+        }
+        // Save a current state on the disk.
+        if(iteration > 1)
+        {
+          continuity.add_record(t);
+          continuity.get_last_record()->save_mesh(&mesh);
+          continuity.get_last_record()->save_spaces(Hermes::vector<Space<double> *>(&space_rho, &space_rho_v_x, 
+            &space_rho_v_y, &space_e));
+          continuity.get_last_record()->save_solutions(Hermes::vector<Solution<double>*>(&prev_rho, &prev_rho_v_x, &prev_rho_v_y, &prev_e));
+          continuity.get_last_record()->save_time_step_length(time_step);
         }
       }
 
@@ -325,9 +400,6 @@ int main(int argc, char* argv[])
       delete matrix;
       delete rhs;
       delete adaptivity;
-      if(!done)
-        for(unsigned int i = 0; i < ref_spaces->size(); i++)
-          delete (*ref_spaces)[i];
     }
     while (done == false);
 
@@ -338,48 +410,17 @@ int main(int argc, char* argv[])
     prev_e.copy(&rsln_e);
 
     delete rsln_rho.get_mesh();
+    delete rsln_rho.get_space();
     rsln_rho.own_mesh = false;
     delete rsln_rho_v_x.get_mesh();
+    delete rsln_rho_v_x.get_space();
     rsln_rho_v_x.own_mesh = false;
     delete rsln_rho_v_y.get_mesh();
+    delete rsln_rho_v_y.get_space();
     rsln_rho_v_y.own_mesh = false;
     delete rsln_e.get_mesh();
+    delete rsln_e.get_space();
     rsln_e.own_mesh = false;
-
-      // Visualization and saving on disk.
-    if((iteration - 1) % EVERY_NTH_STEP == 0)
-    {
-      continuity.add_record((unsigned int)(iteration - 1));
-      continuity.get_last_record()->save_mesh(prev_rho.get_mesh());
-      continuity.get_last_record()->save_space(prev_rho.get_space());
-      continuity.get_last_record()->save_time_step_length(time_step);
-
-      // Hermes visualization.
-      if(HERMES_VISUALIZATION)
-      {        
-        pressure.reinit();
-        pressure_view.show(&pressure);
-        velocity_view.show(&prev_rho_v_x, &prev_rho_v_y);
-        
-        pressure_view.save_numbered_screenshot("pressure %i.bmp", iteration);
-        velocity_view.save_numbered_screenshot("Velocity %i.bmp", iteration);
-      }
-      // Output solution in VTK format.
-      if(VTK_VISUALIZATION)
-      {
-        pressure.reinit();
-        Linearizer lin;
-        char filename[40];
-        sprintf(filename, "Pressure-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&pressure, filename, "Pressure", false);
-        sprintf(filename, "VelocityX-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&prev_rho_v_x, filename, "VelocityX", false);
-        sprintf(filename, "VelocityY-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&prev_rho_v_y, filename, "VelocityY", false);
-        sprintf(filename, "Rho-%i.vtk", iteration - 1);
-        lin.save_solution_vtk(&prev_rho, filename, "Rho", false);
-      }
-    }
   }
 
   pressure_view.close();
