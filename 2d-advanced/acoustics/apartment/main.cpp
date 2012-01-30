@@ -186,7 +186,8 @@ int main(int argc, char* argv[])
     if (Space<std::complex<double> >::get_num_dofs(&space) >= NDOF_STOP) done = true;
 
     delete adaptivity;
-    delete ref_space->get_mesh();
+    if(!done)
+      delete ref_space->get_mesh();
     delete ref_space;
 
     // Increase counter.
